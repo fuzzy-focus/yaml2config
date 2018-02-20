@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+verify_ssl = true
+url = "https://pypi.python.org/simple"
+
+[requires]
+python_version = "3.6"
+
+[dev-packages]
+
+[packages]
+
+click = "*"
+pyyaml = "*"
+"jinja2" = "*"
+gitpython = "*"
+"e1839a8" = {editable = true, path = "."}
