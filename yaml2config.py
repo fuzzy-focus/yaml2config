@@ -14,7 +14,7 @@ import sys
 @click.option('--template-dir', '-t', type=click.Path(exists=True,readable=True,resolve_path=True),
         default='./template', help='template search path (default is ./template)')
 @click.option('--update-templates', '-u', is_flag=True, help='if template folder is git repo, pull from origin:master')
-def convert_yaml(yaml_file, out_dir, template_dir,update_template=False):
+def convert_yaml(yaml_file, out_dir, template_dir,update_templates=False):
     '''Generate config file from YAML document
 
     This script will fill the apropriate Jinja2 Template
