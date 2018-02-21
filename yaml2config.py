@@ -1,4 +1,4 @@
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, TemplateError
 from pathlib import Path
 import yaml
 import click
@@ -22,6 +22,9 @@ def convert_yaml(yaml_file, out_dir, template_dir,update_templates=False):
     defined in your YAML file.
     '''
 
+    if update_templates:
+        update_templates_repo(template_dir)
+
     #Load data from YAML into Python dictionary
     try:
         config_data = yaml.load(yaml_file)
@@ -35,14 +38,14 @@ def convert_yaml(yaml_file, out_dir, template_dir,update_templates=False):
         env = Environment(loader = FileSystemLoader(template_dir), trim_blocks=True, lstrip_blocks=True)
         template = env.get_template(config_data['template'])
     except TemplateError as e:
-        click.echo(click.style('Error in the template file:' + str(template_dir), fg='red')
+        click.echo(click.style('Error in the template file:' + str(Path(template_dir) / config_data['template']), fg='red')
                                 + '\n' + repr(e), err=True)
         sys.exit(1)
 
     #Render the template with data and click.echo the output
     try:
         rendered = template.render(config_data)
-    except TempalteError as e:
+    except TemplateError as e:
         click.echo(click.style('Error during rendering:' + str(template_dir), fg='red')
                                 + '\n' + repr(e), err=True)
         sys.exit(1)
@@ -56,7 +59,7 @@ def convert_yaml(yaml_file, out_dir, template_dir,update_templates=False):
     sys.exit(0)
 
 
-def update_templates(template_dir):
+def update_templates_repo(template_dir):
     try:
         import git
     except ImportError as e:
