@@ -60,6 +60,7 @@ def convert_yaml(yaml_file, out_dir, template_dir,update_templates=False):
 
 
 def update_templates_repo(template_dir):
+    '''assume template_dir is a git repo, then pull from origin:master'''
     try:
         import git
     except ImportError as e:
