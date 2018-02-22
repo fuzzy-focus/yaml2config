@@ -1,5 +1,4 @@
-filename: cisco.cfg
-template: cisco.j2
+template: cisco.j2 
 id: 1
 name: R1
 vlans:
