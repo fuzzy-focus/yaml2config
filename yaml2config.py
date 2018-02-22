@@ -20,46 +20,76 @@ def convert_yaml(yaml_file, out_dir, template_dir,update_templates=False):
     This script will fill the apropriate Jinja2 Template
     file (specified in the YAML doc) with the parameters
     defined in your YAML file.
+
+    The config files will have the same name as the 
+    template files without the '.j2' extension.
     '''
-
     if update_templates:
-        update_templates_repo(template_dir)
+        _update_templates_repo(template_dir)
+    config_data = _load_yaml(yaml_file)
+    no_errors = True
+    if isinstance(config_data['template'], list):
+        templates = config_data['template'] 
+    else:
+        templates = [config_data['template']]
+    for template_file in templates:
+        try: 
+            _write_template(config_data, template_dir, template_file, out_dir)
+        except WriteConfigError as e:
+            no_errors = False
+    if no_errors:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
-    #Load data from YAML into Python dictionary
+
+class WriteConfigError(RuntimeError):
+    pass
+
+
+def _load_yaml(yaml_file):
+    '''load yaml file'''
     try:
         config_data = yaml.load(yaml_file)
     except yaml.YAMLError as e:
         click.echo(click.style('Error in config file:' + str(template_dir), fg='red')
                                 + '\n' + repr(e), err=True)
         sys.exit(1)
+    return config_data
 
-    #Load Jinja2 template
+
+def _load_template(template_dir, template_file):
+    '''load jinja template'''
     try:
         env = Environment(loader = FileSystemLoader(template_dir), trim_blocks=True, lstrip_blocks=True)
-        template = env.get_template(config_data['template'])
+        template = env.get_template(template_file)
     except TemplateError as e:
-        click.echo(click.style('Error in the template file:' + str(Path(template_dir) / config_data['template']), fg='red')
+        click.echo(click.style('Error in the template file:' + str(Path(template_dir) / template_file), fg='red')
                                 + '\n' + repr(e), err=True)
-        sys.exit(1)
+        raise WriteConfigError()
+    return template
 
-    #Render the template with data and click.echo the output
+
+def _write_config(config_data, template, out_file):
+    '''render and write config'''
     try:
         rendered = template.render(config_data)
     except TemplateError as e:
         click.echo(click.style('Error during rendering:' + str(template_dir), fg='red')
                                 + '\n' + repr(e), err=True)
-        sys.exit(1)
+        raise WriteConfigError()
+    else:
+        with open(out_file, 'w') as f:
+            f.write(rendered)
+        click.echo('created config file at ' + click.style(str(out_file), fg='yellow'))
 
-    out_file = Path(out_dir) / config_data['filename']
+def _write_template(config_data, template_dir, template_file, out_dir):
+    '''loads config template, renders it and writes it.'''
+    template = _load_template(template_dir, template_file)
+    out_file = Path(out_dir) / template_file[:-3] #remove .j2 extension
+    _write_config(config_data, template, out_file)
 
-    with open(out_file, 'w') as f:
-        f.write(rendered)
-
-    click.echo('created config file at ' + str(out_file))
-    sys.exit(0)
-
-
-def update_templates_repo(template_dir):
+def _update_templates_repo(template_dir):
     '''assume template_dir is a git repo, then pull from origin:master'''
     try:
         import git
